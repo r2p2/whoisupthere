@@ -13,7 +13,9 @@ struct Human {
     ship: String,
 }
 
-fn from_json(data: &str) -> Vec<Human> {
+type Humans = Vec<Human>;
+
+fn from_json(data: &str) -> Humans {
     let mut humans = Vec::new();
 
     let msg: Value = serde_json::from_str(data).expect("json error");
@@ -27,7 +29,7 @@ fn from_json(data: &str) -> Vec<Human> {
     humans
 }
 
-fn fetch_who_is_up_there() -> Vec<Human> {
+fn fetch_who_is_up_there() -> Humans {
     let data = reqwest::get("http://api.open-notify.org/astros.json")
         .expect("unable to fetch data")
         .text()
