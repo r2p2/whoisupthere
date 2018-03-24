@@ -21,12 +21,19 @@ fn main() {
         )
         .get_matches();
 
-    if matches.occurrences_of("count") > 0 {
-        println!("{}", open_notify::fetch_who_is_up_there().len());
-        return;
-    }
+    match open_notify::fetch_who_is_up_there() {
+        Ok(humans_up_there) => {
+            if matches.occurrences_of("count") > 0 {
+                println!("{}", humans_up_there.len());
+                return;
+            }
 
-    for human in open_notify::fetch_who_is_up_there().iter() {
-        println!("{}, {}", human.name(), human.ship());
+            for human in humans_up_there.iter() {
+                println!("{}, {}", human.name(), human.ship());
+            }
+        },
+        Err(error_msg) => {
+            eprintln!("Ups: {:?}", error_msg);
+        }
     }
 }

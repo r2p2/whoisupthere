@@ -6,7 +6,7 @@ use serde_json::{Error, Value};
 
 /// Fetches the astronouts which are currently in space
 /// from the open-notify.org api.
-pub fn fetch_who_is_up_there() -> humans::Humans {
+pub fn fetch_who_is_up_there() -> Result<humans::Humans, humans::HumanError> {
     let data = reqwest::get("http://api.open-notify.org/astros.json")
         .expect("unable to fetch data")
         .text()
@@ -17,41 +17,48 @@ pub fn fetch_who_is_up_there() -> humans::Humans {
 
 /// Convert json-formated data provided by the open-notify.org
 /// into our own data structure.
-fn from_json(data: &str) -> humans::Humans {
+fn from_json(data: &str) -> Result<humans::Humans, humans::HumanError> {
     let mut humans = Vec::new();
 
-    let msg: Value = serde_json::from_str(data).expect("json error");
-    for human in msg["people"].as_array().unwrap().iter() {
-        humans.push(humans::Human::new(
-            human["name"].as_str().unwrap(),
-            human["craft"].as_str().unwrap(),
-        ));
+    let msg: Value = serde_json::from_str(data)?;
+
+    let people = msg["people"]
+        .as_array()
+        .ok_or(String::from("'people' field is missing"))?;
+
+    for person in people.iter() {
+        let name = person["name"]
+            .as_str()
+            .ok_or(String::from("'name' field is missing"))?;
+
+        let craft = person["craft"]
+            .as_str()
+            .ok_or(String::from("'craft' field is missing"))?;
+
+        humans.push(humans::Human::new(name, craft));
     }
 
-    humans
+    Ok(humans)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use super::humans::Human;
-
-    fn example_data() -> &'static str {
-        r#"{
-"message": "success",
-"number": 6,
-"people": [
-  {"name": "Anton Shkaplerov", "craft": "ISS"},
-  {"name": "Scott Tingle", "craft": "ISS"},
-  {"name": "Norishige Kanai", "craft": "ISS"},
-  {"name": "Oleg Artemyev", "craft": "Soyuz MS-08"},
-  {"name": "Andrew Feustel", "craft": "Soyuz MS-08"},
-  {"name": "Richard Arnold", "craft": "Soyuz MS-08"}]
-}"#
-    }
-
     #[test]
     fn parse_successful_data() {
+        let input_data = r#"{
+            "message": "success",
+            "number": 6,
+            "people": [
+            {"name": "Anton Shkaplerov", "craft": "ISS"},
+            {"name": "Scott Tingle", "craft": "ISS"},
+            {"name": "Norishige Kanai", "craft": "ISS"},
+            {"name": "Oleg Artemyev", "craft": "Soyuz MS-08"},
+            {"name": "Andrew Feustel", "craft": "Soyuz MS-08"},
+            {"name": "Richard Arnold", "craft": "Soyuz MS-08"}]
+            }"#;
+
         let expected_humans = vec![
             Human::new("Anton Shkaplerov", "ISS"),
             Human::new("Scott Tingle", "ISS"),
@@ -61,10 +68,34 @@ mod tests {
             Human::new("Richard Arnold", "Soyuz MS-08"),
         ];
 
-        let humans = from_json(example_data());
-        assert_eq!(6, humans.len());
-        for human in expected_humans.iter() {
-            assert_eq!(true, humans.contains(&human))
+        if let Ok(humans) = from_json(input_data) {
+            assert_eq!(humans.len(), 6);
+            for human in expected_humans.iter() {
+                assert_eq!(humans.contains(&human), true);
+            }
+        } else {
+            assert!(false);
+        }
+    }
+
+    #[test]
+    fn parse_faulty_data() {
+        let input_data = r#"{
+            "message": "success",
+            "number": 6,
+            "people": [
+            {"name": "Anton Shkaplerov", "craft": "ISS"},
+            {"name": "Scott Tingle", "craft": "ISS"},
+            {"name": "Norishige Kanai", "craft": "ISS"},
+            {"name": "Oleg Artemyev" },
+            {"name": "Andrew Feustel", "craft": "Soyuz MS-08"},
+            {"name": "Richard Arnold", "craft": "Soyuz MS-08"}]
+            }"#;
+
+        if let Err(_) = from_json(input_data) {
+            assert!(true);
+        } else {
+            assert!(false);
         }
     }
 }
