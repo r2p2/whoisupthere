@@ -1,5 +1,5 @@
+use reqwest;
 use serde_json;
-use serde_json::Error;
 
 #[derive(Debug, PartialEq)]
 pub struct Human {
@@ -31,6 +31,13 @@ pub struct HumanError(String);
 
 impl From<serde_json::Error> for HumanError {
     fn from(e: serde_json::Error) -> HumanError {
+        use std::error::Error;
+        HumanError(e.description().to_string())
+    }
+}
+
+impl From<reqwest::Error> for HumanError {
+    fn from(e: reqwest::Error) -> HumanError {
         use std::error::Error;
         HumanError(e.description().to_string())
     }

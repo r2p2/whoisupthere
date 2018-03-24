@@ -7,10 +7,8 @@ use serde_json::{Error, Value};
 /// Fetches the astronouts which are currently in space
 /// from the open-notify.org api.
 pub fn fetch_who_is_up_there() -> Result<humans::Humans, humans::HumanError> {
-    let data = reqwest::get("http://api.open-notify.org/astros.json")
-        .expect("unable to fetch data")
-        .text()
-        .unwrap();
+    let data = reqwest::get("http://api.open-notify.org/astros.json")?
+        .text()?;
 
     from_json(&data)
 }
