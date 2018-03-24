@@ -16,7 +16,6 @@ pub fn fetch_who_is_up_there() -> Result<humans::Humans, humans::HumanError> {
 /// Convert json-formated data provided by the open-notify.org
 /// into our own data structure.
 fn from_json(data: &str) -> Result<humans::Humans, humans::HumanError> {
-    let mut humans = Vec::new();
 
     let msg: Value = serde_json::from_str(data)?;
 
@@ -24,6 +23,7 @@ fn from_json(data: &str) -> Result<humans::Humans, humans::HumanError> {
         .as_array()
         .ok_or(String::from("'people' field is missing"))?;
 
+    let mut humans = Vec::with_capacity(people.len());
     for person in people.iter() {
         let name = person["name"]
             .as_str()
