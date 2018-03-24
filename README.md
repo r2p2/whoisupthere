@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/r2p2/whoisupthere.svg?branch=master)](https://travis-ci.org/r2p2/whoisupthere)
+
 # whoisupthere
 > Command line tool to stay up to date about who is in space right now.
 
