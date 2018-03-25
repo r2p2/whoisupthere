@@ -1,10 +1,7 @@
 #![allow(unused_imports)]
 
 extern crate clap;
-extern crate reqwest;
-extern crate serde_json;
-
-pub mod open_notify;
+extern crate open_notify_api;
 
 use clap::{App, Arg};
 
@@ -21,15 +18,15 @@ fn main() {
         )
         .get_matches();
 
-    match open_notify::fetch_who_is_up_there() {
-        Ok(humans_up_there) => {
+    match open_notify_api::astros() {
+        Ok(astros) => {
             if matches.occurrences_of("count") > 0 {
-                println!("{}", humans_up_there.len());
+                println!("{}", astros.number());
                 return;
             }
 
-            for human in humans_up_there.iter() {
-                println!("{}, {}", human.name(), human.ship());
+            for person in astros.people().iter() {
+                println!("{}, {}", person.name(), person.craft());
             }
         },
         Err(error_msg) => {
